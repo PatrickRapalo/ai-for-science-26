@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeatMaker Academy</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --pad-kick: #e94560;
+            --pad-snare: #0f3460;
+            --pad-hihat: #16213e;
+            --text: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .drum-kit {
+            display: grid;
+            grid-template-columns: repeat(3, 120px);
+            gap: 20px;
+        }
+
+        .pad {
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            user-select: none;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.3);
+        }
+
+        .pad:active, .pad.playing {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+        }
+
+        .kick { background: var(--pad-kick); }
+        .snare { background: var(--pad-snare); }
+        .hihat { background: var(--pad-hihat); }
+
+        .key-hint {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .instructions {
+            margin-top: 30px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        kbd {
+            background: #eee;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>BeatMaker Academy</h1>
+        <p>Master the Rhythm</p>
+    </div>
+
+    <div class="drum-kit">
+        <div class="pad kick" data-key="KeyA">
+            <strong>KICK</strong>
+            <span class="key-hint">[A]</span>
+        </div>
+        <div class="pad snare" data-key="KeyS">
+            <strong>SNARE</strong>
+            <span class="key-hint">[S]</span>
+        </div>
+        <div class="pad hihat" data-key="KeyD">
+            <strong>HI-HAT</strong>
+            <span class="key-hint">[D]</span>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <p>Use your mouse or keyboard keys <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to play.</p>
+        <p><em>Tip: Start with a simple 4/4 beat: Hat, Hat, Hat, Hat!</em></p>
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Sound Synthesis Functions
+        const playKick = () => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            gain.gain.setValueAtTime(1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        };
+
+        const playSnare = () => {
+            const noise = audioCtx.createBufferSource();
+            const bufferSize = audioCtx.sampleRate * 0.2;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+            
+            noise.buffer = buffer;
+            const noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'highpass';
+            noiseFilter.frequency.value = 1000;
+            
+            const noiseGain = audioCtx.createGain();
+            noise.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+
+            noiseGain.gain.setValueAtTime(1, audioCtx.currentTime);
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+
+            noise.start();
+            noise.stop(audioCtx.currentTime + 0.2);
+        };
+
+        const playHiHat = () => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.frequency.setValueAtTime(10000, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        };
+
+        // UI Logic
+        const sounds = {
+            'KeyA': { fn: playKick, class: 'kick' },
+            'KeyS': { fn: playSnare, class: 'snare' },
+            'KeyD': { fn: playHiHat, class: 'hihat' }
+        };
+
+        function triggerSound(key) {
+            if (sounds[key]) {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                sounds[key].fn();
+                const el = document.querySelector(`[data-key="${key}"]`);
+                el.classList.add('playing');
+                setTimeout(() => el.classList.remove('playing'), 100);
+            }
+        }
+
+        // Listeners
+        window.addEventListener('keydown', (e) => triggerSound(e.code));
+        
+        document.querySelectorAll('.pad').forEach(pad => {
+            pad.addEventListener('mousedown', () => {
+                const key = pad.getAttribute('data-key');
+                triggerSound(key);
+            });
+        });
+    </script>
+</body>
+</html>
