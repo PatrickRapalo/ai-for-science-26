@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Drum Learner • Basic Kit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(to bottom, #1a1a2e, #16213e);
+    color: #e0e0ff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.5);
+    text-align: center;
+    border-bottom: 1px solid #444;
+  }
+
+  h1 {
+    margin: 8px 0;
+    font-size: 2.1rem;
+    color: #a5d8ff;
+  }
+
+  .info {
+    font-size: 0.95rem;
+    opacity: 0.85;
+  }
+
+  .container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+  }
+
+  .drumkit {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px 14px;
+    max-width: 780px;
+    width: 94%;
+    margin: 20px auto;
+  }
+
+  .drum {
+    aspect-ratio: 1 / 1;
+    background: radial-gradient(circle at 30% 30%, #555, #222);
+    border: 3px solid #444;
+    border-radius: 12px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.7), inset 0 2px 4px rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #ccc;
+    user-select: none;
+    transition: all 0.08s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .drum:active,
+  .drum.playing {
+    transform: scale(0.92);
+    border-color: #88f;
+    box-shadow: 0 3px 8px #88f8, inset 0 1px 3px #88f8;
+  }
+
+  .drum::after {
+    content: attr(data-key);
+    position: absolute;
+    bottom: 6px;
+    right: 8px;
+    font-size: 0.7rem;
+    color: #888;
+    opacity: 0.7;
+  }
+
+  .kick   { grid-column: span 2; grid-row: span 2; border-radius: 18px; font-size: 1.4rem; background: radial-gradient(circle at 35% 35%, #444, #111); }
+  .snare  { background: radial-gradient(circle at 30% 40%, #c44, #822); }
+  .hihat  { background: radial-gradient(circle at 40% 30%, #555, #333); }
+  .crash  { background: radial-gradient(circle at 25% 25%, #777, #444); }
+  .ride   { background: radial-gradient(circle at 35% 35%, #666, #333); }
+  .tom1   { background: radial-gradient(circle at 30% 30%, #555, #224); }
+  .tom2   { background: radial-gradient(circle at 30% 30%, #555, #224); }
+  .floor  { background: radial-gradient(circle at 35% 35%, #444, #112); }
+
+  .controls {
+    margin: 20px 0 10px;
+    text-align: center;
+  }
+
+  button {
+    padding: 10px 20px;
+    margin: 0 8px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    background: #0d6efd;
+    color: white;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  button:hover { background: #0b5ed7; }
+  button.active { background: #198754; }
+
+  #metronomeBPM {
+    width: 70px;
+    padding: 8px;
+    font-size: 1.1rem;
+    text-align: center;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: #222;
+    color: #eee;
+  }
+
+  footer {
+    padding: 12px;
+    text-align: center;
+    font-size: 0.8rem;
+    opacity: 0.7;
+  }
+
+  @media (max-width: 600px) {
+    .drumkit { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .kick { grid-column: span 2; grid-row: span 2; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Drum Learner</h1>
+  <div class="info">Click drums or use keyboard: space = kick • s = snare • h = hihat • k = crash</div>
+</header>
+
+<div class="container">
+
+  <div class="controls">
+    <button id="btnPlay">Start Metronome</button>
+    <label>BPM: <input type="number" id="metronomeBPM" value="90" min="40" max="180" step="1"></label>
+  </div>
+
+  <div class="drumkit">
+    <div class="drum kick"   data-key=" " data-sound="kick">KICK</div>
+    <div class="drum snare"  data-key="s" data-sound="snare">SNARE</div>
+    <div class="drum hihat"  data-key="h" data-sound="hihat">HIHAT</div>
+    <div class="drum crash"  data-key="k" data-sound="crash">CRASH</div>
+    <div class="drum ride"   data-key="r" data-sound="ride">RIDE</div>
+    <div class="drum tom1"   data-key="t" data-sound="tom1">TOM 1</div>
+    <div class="drum tom2"   data-key="y" data-sound="tom2">TOM 2</div>
+    <div class="drum floor"  data-key="f" data-sound="floor">FLOOR</div>
+  </div>
+
+</div>
+
+<footer>
+  Educational drum trainer — no audio files needed (using Web Audio API)
+</footer>
+
+<script>
+// ────────────────────────────────────────────────
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+const sounds = {};
+
+function createDrumSound(type) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  const filter = audioCtx.createBiquadFilter();
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  if (type === "kick") {
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.12);
+    gain.gain.setValueAtTime(1.4, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+  }
+  else if (type === "snare") {
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.9, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+
+    // noise burst
+    const noise = audioCtx.createBufferSource();
+    const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.2, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    noise.buffer = buffer;
+    const noiseGain = audioCtx.createGain();
+    noise.connect(noiseGain);
+    noiseGain.connect(audioCtx.destination);
+    noiseGain.gain.setValueAtTime(0.7, audioCtx.currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+    noise.start();
+  }
+  else if (type === "hihat") {
+    osc.type = "square";
+    osc.frequency.value = 4200;
+    gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+    filter.type = "highpass";
+    filter.frequency.value = 7000;
+  }
+  else if (type === "crash" || type === "ride") {
+    osc.type = "sawtooth";
+    osc.frequency.value = type === "crash" ? 3200 : 1800;
+    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (type === "crash" ? 1.4 : 0.9));
+    filter.type = "highpass";
+    filter.frequency.value = 2800;
+  }
+  else { // toms
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(type === "tom1" ? 180 : type === "tom2" ? 140 : 90, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.25);
+    gain.gain.setValueAtTime(1.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+  }
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + 1.5);
+}
+
+function playSound(type) {
+  if (!audioCtx) return;
+  createDrumSound(type);
+}
+
+// ────────────────────────────────────────────────
+document.querySelectorAll('.drum').forEach(drum => {
+  const key = drum.dataset.key;
+  const sound = drum.dataset.sound;
+
+  drum.addEventListener('click', () => {
+    playSound(sound);
+    drum.classList.add('playing');
+    setTimeout(() => drum.classList.remove('playing'), 120);
+  });
+
+  if (key) {
+    window.addEventListener('keydown', e => {
+      if (e.key === key && !e.repeat) {
+        playSound(sound);
+        drum.classList.add('playing');
+        setTimeout(() => drum.classList.remove('playing'), 140);
+      }
+    });
+  }
+});
+
+// ────────────────────────────────────────────────
+let metronomeInterval = null;
+
+const btnPlay = document.getElementById('btnPlay');
+const bpmInput  = document.getElementById('metronomeBPM');
+
+function startMetronome() {
+  const bpm = parseInt(bpmInput.value) || 90;
+  const interval = 60000 / bpm;
+
+  if (metronomeInterval) clearInterval(metronomeInterval);
+
+  metronomeInterval = setInterval(() => {
+    // high woodblock-like click
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.06);
+  }, interval);
+
+  btnPlay.textContent = "Stop Metronome";
+  btnPlay.classList.add('active');
+}
+
+function stopMetronome() {
+  if (metronomeInterval) {
+    clearInterval(metronomeInterval);
+    metronomeInterval = null;
+  }
+  btnPlay.textContent = "Start Metronome";
+  btnPlay.classList.remove('active');
+}
+
+btnPlay.addEventListener('click', () => {
+  if (metronomeInterval) {
+    stopMetronome();
+  } else {
+    startMetronome();
+  }
+});
+
+bpmInput.addEventListener('change', () => {
+  if (metronomeInterval) startMetronome();
+});
+
+</script>
+</body>
+</html>
