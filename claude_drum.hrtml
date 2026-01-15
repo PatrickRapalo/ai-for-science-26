@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DrumLearn - Interactive Drumming Education</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Drum Kit Styles */
+        .drum-kit {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .drum {
+            background: linear-gradient(145deg, #f0f0f0, #cacaca);
+            border-radius: 50%;
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.1s;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drum:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+        }
+
+        .drum:active {
+            transform: scale(0.95);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .drum.hit {
+            animation: drumHit 0.3s ease;
+        }
+
+        @keyframes drumHit {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.95); background: linear-gradient(145deg, #667eea, #764ba2); }
+        }
+
+        .drum-label {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+
+        .drum-key {
+            font-size: 0.9em;
+            color: #666;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        /* Lessons Styles */
+        .lessons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .lesson-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .lesson-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .lesson-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .lesson-description {
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+
+        .lesson-difficulty {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 4px 12px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+
+        /* Practice Mode Styles */
+        .practice-area {
+            text-align: center;
+        }
+
+        .pattern-display {
+            background: #f5f5f5;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 20px 0;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pattern-beats {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .beat {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .beat.active {
+            background: #667eea;
+            color: white;
+            transform: scale(1.2);
+        }
+
+        .beat.played {
+            background: #4caf50;
+            color: white;
+        }
+
+        .beat.missed {
+            background: #f44336;
+            color: white;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .score-display {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+
+        .tempo-control {
+            margin: 20px 0;
+        }
+
+        .tempo-slider {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .key-guide {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .key-guide h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .key-mapping {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .key-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .key-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .drum-kit {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🥁 DrumLearn</h1>
+        <p class="subtitle">Master the drums with interactive lessons and practice</p>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="drum-kit">Drum Kit</button>
+            <button class="tab" data-tab="lessons">Lessons</button>
+            <button class="tab" data-tab="practice">Practice Mode</button>
+        </div>
+
+        <!-- Drum Kit Tab -->
+        <div class="tab-content active" id="drum-kit">
+            <div class="key-guide">
+                <h3>Keyboard Controls</h3>
+                <div class="key-mapping">
+                    <div class="key-item"><span class="key-badge">Q</span> Hi-Hat</div>
+                    <div class="key-item"><span class="key-badge">W</span> Ride</div>
+                    <div class="key-item"><span class="key-badge">E</span> Crash</div>
+                    <div class="key-item"><span class="key-badge">A</span> Snare</div>
+                    <div class="key-item"><span class="key-badge">S</span> Tom 1</div>
+                    <div class="key-item"><span class="key-badge">D</span> Tom 2</div>
+                    <div class="key-item"><span class="key-badge">Z</span> Kick</div>
+                    <div class="key-item"><span class="key-badge">X</span> Floor Tom</div>
+                    <div class="key-item"><span class="key-badge">C</span> Clap</div>
+                </div>
+            </div>
+
+            <div class="drum-kit">
+                <div class="drum" data-sound="hihat" data-key="Q">
+                    <span class="drum-label">Hi-Hat</span>
+                    <span class="drum-key">Q</span>
+                </div>
+                <div class="drum" data-sound="ride" data-key="W">
+                    <span class="drum-label">Ride</span>
+                    <span class="drum-key">W</span>
+                </div>
+                <div class="drum" data-sound="crash" data-key="E">
+                    <span class="drum-label">Crash</span>
+                    <span class="drum-key">E</span>
+                </div>
+                <div class="drum" data-sound="snare" data-key="A">
+                    <span class="drum-label">Snare</span>
+                    <span class="drum-key">A</span>
+                </div>
+                <div class="drum" data-sound="tom1" data-key="S">
+                    <span class="drum-label">Tom 1</span>
+                    <span class="drum-key">S</span>
+                </div>
+                <div class="drum" data-sound="tom2" data-key="D">
+                    <span class="drum-label">Tom 2</span>
+                    <span class="drum-key">D</span>
+                </div>
+                <div class="drum" data-sound="kick" data-key="Z">
+                    <span class="drum-label">Kick</span>
+                    <span class="drum-key">Z</span>
+                </div>
+                <div class="drum" data-sound="floortom" data-key="X">
+                    <span class="drum-label">Floor Tom</span>
+                    <span class="drum-key">X</span>
+                </div>
+                <div class="drum" data-sound="clap" data-key="C">
+                    <span class="drum-label">Clap</span>
+                    <span class="drum-key">C</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lessons Tab -->
+        <div class="tab-content" id="lessons">
+            <h2 style="color: #667eea; margin-bottom: 20px;">Learn Drumming Fundamentals</h2>
+            <div class="lessons-grid">
+                <div class="lesson-card" data-lesson="basic-beat">
+                    <div class="lesson-title">Basic Rock Beat</div>
+                    <div class="lesson-description">Learn the fundamental 4/4 rock beat using kick, snare, and hi-hat.</div>
+                    <span class="lesson-difficulty">Beginner</span>
+                </div>
+                <div class="lesson-card" data-lesson="sixteenth-hihat">
+                    <div class="lesson-title">Sixteenth Note Hi-Hats</div>
+                    <div class="lesson-description">Develop speed and coordination with faster hi-hat patterns.</div>
+                    <span class="lesson-difficulty">Intermediate</span>
+                </div>
+                <div class="lesson-card" data-lesson="paradiddle">
+                    <div class="lesson-title">Paradiddle Pattern</div>
+                    <div class="lesson-description">Master this essential rudiment: R-L-R-R L-R-L-L</div>
+                    <span class="lesson-difficulty">Intermediate</span>
+                </div>
+                <div class="lesson-card" data-lesson="jazz-swing">
+                    <div class="lesson-title">Jazz Swing Pattern</div>
+                    <div class="lesson-description">Learn the classic swing ride pattern with improvisation tips.</div>
+                    <span class="lesson-difficulty">Advanced</span>
+                </div>
+                <div class="lesson-card" data-lesson="double-bass">
+                    <div class="lesson-title">Double Bass Kick</div>
+                    <div class="lesson-description">Build speed and power with double kick drum techniques.</div>
+                    <span class="lesson-difficulty">Advanced</span>
+                </div>
+                <div class="lesson-card" data-lesson="fills">
+                    <div class="lesson-title">Creative Fill Ideas</div>
+                    <div class="lesson-description">Add excitement to your playing with dynamic drum fills.</div>
+                    <span class="lesson-difficulty">Intermediate</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Practice Mode Tab -->
+        <div class="tab-content" id="practice">
+            <div class="practice-area">
+                <h2 style="color: #667eea; margin-bottom: 20px;">Rhythm Practice Mode</h2>
+                
+                <div class="tempo-control">
+                    <label for="tempo">Tempo: <span id="tempo-value">120</span> BPM</label><br>
+                    <input type="range" id="tempo" class="tempo-slider" min="60" max="200" value="120">
+                </div>
+
+                <div class="pattern-display">
+                    <h3>Follow the Pattern</h3>
+                    <div class="pattern-beats" id="pattern-beats"></div>
+                    <p id="pattern-instruction">Click "Start Practice" to begin!</p>
+                </div>
+
+                <div class="score-display">
+                    Score: <span id="score">0</span> | Accuracy: <span id="accuracy">0%</span>
+                </div>
+
+                <div class="controls">
+                    <button class="btn-primary" id="start-practice">Start Practice</button>
+                    <button class="btn-secondary" id="stop-practice">Stop</button>
+                    <button class="btn-secondary" id="new-pattern">New Pattern</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Audio Context for synthesized drum sounds
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Drum sound synthesis functions
+        const drumSounds = {
+            kick: () => {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                osc.frequency.setValueAtTime(150, audioContext.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                gain.gain.setValueAtTime(1, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                osc.start(audioContext.currentTime);
+                osc.stop(audioContext.currentTime + 0.5);
+            },
+            
+            snare: () => {
+                const noise = audioContext.createBufferSource();
+                const noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.2, audioContext.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                
+                for (let i = 0; i < output.length; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+                
+                noise.buffer = noiseBuffer;
+                
+                const noiseFilter = audioContext.createBiquadFilter();
+                noiseFilter.type = 'highpass';
+                noiseFilter.frequency.value = 1000;
+                
+                const noiseGain = audioContext.createGain();
+                noiseGain.gain.setValueAtTime(1, audioContext.currentTime);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                
+                noise.connect(noiseFilter);
+                noiseFilter.connect(noiseGain);
+                noiseGain.connect(audioContext.destination);
+                
+                noise.start(audioContext.currentTime);
+            },
+            
+            hihat: () => {
+                const noise = audioContext.createBufferSource();
+                const noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.05, audioContext.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                
+                for (let i = 0; i < output.length; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+                
+                noise.buffer = noiseBuffer;
+                
+                const filter = audioContext.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.value = 7000;
+                
+                const gain = audioContext.createGain();
+                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+                
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                noise.start(audioContext.currentTime);
+            },
+            
+            tom1: () => playTom(200),
+            tom2: () => playTom(150),
+            floortom: () => playTom(100),
+            
+            crash: () => {
+                const noise = audioContext.createBufferSource();
+                const noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate * 1, audioContext.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                
+                for (let i = 0; i < output.length; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+                
+                noise.buffer = noiseBuffer;
+                
+                const filter = audioContext.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 5000;
+                
+                const gain = audioContext.createGain();
+                gain.gain.setValueAtTime(0.5, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+                
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                noise.start(audioContext.currentTime);
+            },
+            
+            ride: () => {
+                const osc1 = audioContext.createOscillator();
+                const osc2 = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc1.frequency.value = 800;
+                osc2.frequency.value = 540;
+                
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                osc1.start(audioContext.currentTime);
+                osc2.start(audioContext.currentTime);
+                osc1.stop(audioContext.currentTime + 0.3);
+                osc2.stop(audioContext.currentTime + 0.3);
+            },
+            
+            clap: () => {
+                const noise = audioContext.createBufferSource();
+                const noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.05, audioContext.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                
+                for (let i = 0; i < output.length; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+                
+                noise.buffer = noiseBuffer;
+                
+                const filter = audioContext.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 1500;
+                
+                const gain = audioContext.createGain();
+                gain.gain.setValueAtTime(0.5, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+                
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                noise.start(audioContext.currentTime);
+            }
+        };
+
+        function playTom(freq) {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            
+            osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            gain.gain.setValueAtTime(0.7, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            osc.start(audioContext.currentTime);
+            osc.stop(audioContext.currentTime + 0.3);
+        }
+
+        // Play drum sound
+        function playDrum(soundName) {
+            if (drumSounds[soundName]) {
+                drumSounds[soundName]();
+            }
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Drum kit interaction
+        document.querySelectorAll('.drum').forEach(drum => {
+            drum.addEventListener('click', () => {
+                const sound = drum.dataset.sound;
+                playDrum(sound);
+                drum.classList.add('hit');
+                setTimeout(() => drum.classList.remove('hit'), 300);
+            });
+        });
+
+        // Keyboard controls for drums
+        const keyMap = {
+            'Q': 'hihat',
+            'W': 'ride',
+            'E': 'crash',
+            'A': 'snare',
+            'S': 'tom1',
+            'D': 'tom2',
+            'Z': 'kick',
+            'X': 'floortom',
+            'C': 'clap'
+        };
+
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toUpperCase();
+            if (keyMap[key]) {
+                playDrum(keyMap[key]);
+                const drum = document.querySelector(`[data-key="${key}"]`);
+                if (drum) {
+                    drum.classList.add('hit');
+                    setTimeout(() => drum.classList.remove('hit'), 300);
+                }
+                
+                // Check if in practice mode
+                if (practiceMode.active && practiceMode.currentBeat < practiceMode.pattern.length) {
+                    checkPracticeInput(keyMap[key]);
+                }
+            }
+        });
+
+        // Practice Mode
+        const practiceMode = {
+            active: false,
+            pattern: [],
+            currentBeat: 0,
+            score: 0,
+            totalBeats: 0,
+            tempo: 120,
+            intervalId: null
+        };
+
+        const patterns = [
+            { name: 'Basic Rock', beats: ['kick', 'hihat', 'snare', 'hihat', 'kick', 'hihat', 'snare', 'hihat'] },
+            { name: 'Simple Groove', beats: ['kick', 'snare', 'kick', 'snare', 'kick', 'kick', 'snare', 'snare'] },
+            { name: 'Hi-Hat Focus', beats: ['hihat', 'hihat', 'snare', 'hihat', 'hihat', 'hihat', 'snare', 'hihat'] },
+            { name: 'Tom Pattern', beats: ['tom1', 'tom2', 'floortom', 'snare', 'tom1', 'tom2', 'floortom', 'kick'] }
+        ];
+
+        function generatePattern() {
+            const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+            practiceMode.pattern = pattern.beats;
+            practiceMode.currentBeat = 0;
+            displayPattern();
+        }
+
+        function displayPattern() {
+            const container = document.getElementById('pattern-beats');
+            container.innerHTML = '';
+            
+            practiceMode.pattern.forEach((beat, index) => {
+                const beatDiv = document.createElement('div');
+                beatDiv.className = 'beat';
+                beatDiv.textContent = beat.toUpperCase().substring(0, 3);
+                beatDiv.dataset.index = index;
+                container.appendChild(beatDiv);
+            });
+            
+            document.getElementById('pattern-instruction').textContent = 
+                'Play the pattern using your keyboard or click the drums!';
+        }
+
+        function checkPracticeInput(sound) {
+            if (practiceMode.pattern[practiceMode.currentBeat] === sound) {
+                const beatDiv = document.querySelector(`.beat[data-index="${practiceMode.currentBeat}"]`);
+                beatDiv.classList.add('played');
+                practiceMode.score++;
+                practiceMode.currentBeat++;
+                
+                if (practiceMode.currentBeat >= practiceMode.pattern.length) {
+                    setTimeout(() => {
+                        alert('Pattern complete! Great job!');
+                        practiceMode.totalBeats += practiceMode.pattern.length;
+                        updateScore();
+                        generatePattern();
+                    }, 500);
+                }
+            } else {
+                const beatDiv = document.querySelector(`.beat[data-index="${practiceMode.currentBeat}"]`);
+                beatDiv.classList.add('missed');
+                setTimeout(() => beatDiv.classList.remove('missed'), 500);
+            }
+            
+            practiceMode.totalBeats++;
+            updateScore();
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = practiceMode.score;
+            const accuracy = practiceMode.totalBeats > 0 
+                ? Math.round((practiceMode.score / practiceMode.totalBeats) * 100) 
+                : 0;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+        }
+
+        function startMetronome() {
+            const beatInterval = 60000 / practiceMode.tempo;
+            practiceMode.intervalId = setInterval(() => {
+                const currentBeat = document.querySelector(`.beat[data-index="${practiceMode.currentBeat}"]`);
+                if (currentBeat) {
+                    currentBeat.classList.add('active');
+                    setTimeout(() => currentBeat.classList.remove('active'), beatInterval / 2);
+                }
+            }, beatInterval);
+        }
+
+        function stopMetronome() {
+            if (practiceMode.intervalId) {
+                clearInterval(practiceMode.intervalId);
+                practiceMode.intervalId = null;
+            }
+        }
+
+        // Practice controls
+        document.getElementById('start-practice').addEventListener('click', () => {
+            if (!practiceMode.active) {
+                practiceMode.active = true;
+                practiceMode.score = 0;
+                practiceMode.totalBeats = 0;
+                generatePattern();
+                startMetronome();
+                updateScore();
+                document.getElementById('start-practice').textContent = 'Practicing...';
+                document.getElementById('start-practice').disabled = true;
+            }
+        });
+
+        document.getElementById('stop-practice').addEventListener('click', () => {
+            practiceMode.active = false;
+            stopMetronome();
+            document.getElementById('start-practice').textContent = 'Start Practice';
+            document.getElementById('start-practice').disabled = false;
+            document.getElementById('pattern-instruction').textContent = 'Click "Start Practice" to begin!';
+        });
+
+        document.getElementById('new-pattern').addEventListener('click', () => {
+            if (practiceMode.active) {
+                generatePattern();
+            }
+        });
+
+        document.getElementById('tempo').addEventListener('input', (e) => {
+            practiceMode.tempo = e.target.value;
+            document.getElementById('tempo-value').textContent = e.target.value;
+            
+            if (practiceMode.active) {
+                stopMetronome();
+                startMetronome();
+            }
+        });
+
+        // Lesson cards interaction
+        document.querySelectorAll('.lesson-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const lesson = card.dataset.lesson;
+                alert(`Lesson: ${card.querySelector('.lesson-title').textContent}\n\n${card.querySelector('.lesson-description').textContent}\n\nThis would load detailed lesson content with demonstrations and exercises!`);
+            });
+        });
+    </script>
+</body>
+</html>
