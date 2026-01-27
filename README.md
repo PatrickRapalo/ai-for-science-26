@@ -4,9 +4,7 @@
 
 [Net Logo](https://www.netlogo.org/)
 
-Agent based Modeling
-
-Agent Oriented Programming
+Agent based Modeling vs Agent Oriented Programming
 
 ## Drum Demo
 
