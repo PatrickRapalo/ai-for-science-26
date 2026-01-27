@@ -2,6 +2,8 @@
 
 [Website Link](https://patrickrapalo.github.io/ai-for-science-26/)
 
+[Net Logo](https://www.netlogo.org/)
+
 ## Drum Demo
 
 [Claude](https://patrickrapalo.github.io/ai-for-science-26/claude_drum.html)
