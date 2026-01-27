@@ -4,6 +4,10 @@
 
 [Net Logo](https://www.netlogo.org/)
 
+Agent based Modeling
+
+Agent Oriented Programming
+
 ## Drum Demo
 
 [Claude](https://patrickrapalo.github.io/ai-for-science-26/claude_drum.html)
