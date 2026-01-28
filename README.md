@@ -1,10 +1,12 @@
 # Ai-for-science-26
 
-[Website Link](https://patrickrapalo.github.io/ai-for-science-26/)
+## Web Links
+
+[Github Link](https://patrickrapalo.github.io/ai-for-science-26/)
 
 [Net Logo](https://www.netlogo.org/)
 
-Agent based Modeling vs Agent Oriented Programming
+## Agent based Modeling vs Agent Oriented Programming
 
 [MESA Demo](https://colab.research.google.com/drive/1U-l3RdYzgTnom5e3tkVuY8-QNX6nqEcD?usp=sharing)
 
