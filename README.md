@@ -6,6 +6,12 @@
 
 Agent based Modeling vs Agent Oriented Programming
 
+[MESA Demo](https://colab.research.google.com/drive/1U-l3RdYzgTnom5e3tkVuY8-QNX6nqEcD?usp=sharing)
+
+[Fishsing Recommendation Agent](https://colab.research.google.com/drive/10VNZsYOacVtnAyO8t_VYisGHhIfhX_6D?usp=sharing)
+
+[Plant Agent](https://colab.research.google.com/drive/1tCUH9nGG_C2RKv34jPubh6hpl6YsQVrt?usp=sharing)
+
 ## Drum Demo
 
 [Claude](https://patrickrapalo.github.io/ai-for-science-26/claude_drum.html)
